@@ -1,3 +1,5 @@
+const readlineSync = require('readline-sync');
+
 /*
 
 we need:
@@ -12,42 +14,65 @@ rename oneCount and zeroCount,
 
 */
 
-let colors = ["r", "o", "y", "g", "b", "p"];
+const colors = ["r", "o", "y", "g", "b", "p"];
 
 let answer = "";
 
 //generates random answer
 for (let i=0; i<4; i++) {
-	answer += colors[Math.floor(Math.random()*6)]
+	answer += colors[Math.floor(Math.random()*6)];
 }
 
 let allInputs = new Array(10).fill("    ");
 let allResults = new Array(10).fill("    ");
 
-let currentInput = "rogy";
+let turnCounter = 0;
 
-allInputs[0] = currentInput;
-allResults[0] = compareInputToAnswer(currentInput, answer);
-
-let turnCounter = 1;
-
+printGameState();
 takeTurn();
 
 function takeTurn() {
-	process.stdin.setEncoding('utf8');
-	process.stdin.once('data', function(t) {
-		if (!(isValidInput(t))) {
-			console.log(`Not a valid input! The valid inputs are: ${colors}`);
+	let validInput = false;
+	let guess = "";
+
+	while (!validInput) {
+		guess = readlineSync.question("Enter a guess: ");
+
+		validInput = isValidInput(guess);
+
+		if (!validInput)
+			console.log(`Your guess must be 4 of the letters: ${colors}.`);
+	}
+
+	allInputs[turnCounter] = guess;
+	allResults[turnCounter] = compareInputToAnswer(guess, answer);
+
+	printGameState();
+
+	if (allResults[turnCounter] == "1111") {
+		console.log(`You win!!! The answer was "${answer}".`);
+	}
+	else {
+		turnCounter++;
+
+		if (turnCounter < 10) {
+			takeTurn();
+		} 
+		else {
+			console.log(`Sorry, you lose :(. The answer was "${answer}".`);
 		}
-
-
-
-		printGameState();
-
-	});
+	}
 }
 
 function isValidInput(input) {
+	if (input.length !== 4)
+		return false;
+
+	for (let i = 0; i < 4; i++) {
+		if (!colors.includes(input[i]))
+			return false;
+	}
+
 	return true;
 }
 
@@ -88,6 +113,8 @@ function compareInputToAnswer(input, answer) {
 
 function printGameState() {
 	process.stdout.write('\033c');
+
+	console.log(`The answer may contain the colors: ${colors}.`);
 
 	for (let i = 9; i >= 0; i--) {
 		console.log((i+1) + ". " + allInputs[i] + "  " + allResults[i]);
